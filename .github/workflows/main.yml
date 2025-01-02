@@ -4,7 +4,6 @@ on:
 on:
   schedule:
     - cron: '*/5 * * * *' # This runs every 5 minutes (you can adjust this)
-
 jobs:
   transaction_alerts:
     runs-on: ubuntu-latest
