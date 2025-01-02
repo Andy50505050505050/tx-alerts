@@ -15,7 +15,7 @@ jobs:
           export API_KEY="J7ZWATDNC5H2JPCRU6AGVX7VHXUESWWSX5"
           export TOKEN_ADDRESS="0xA4b3445A58111ABD407C34402aB59B0FE05bFF5a"
           export BOT_TOKEN="${{ secrets.TELEGRAMBOTTOKEN }}"
-          export CHAT_ID="-1002455751644"
+          export CHAT_ID="-1007106529115"
 
           # Call the BscScan API
           RESPONSE=$(curl -s "https://api.bscscan.com/api?module=logs&action=getLogs&fromBlock=latest&toBlock=latest&address=$TOKEN_ADDRESS&apikey=$API_KEY")
