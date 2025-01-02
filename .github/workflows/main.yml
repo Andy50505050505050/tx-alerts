@@ -1,9 +1,8 @@
 name: Transaction Alerts
-
 on:
-  workflow_dispatch:  # Allows manual triggering
-  schedule:           # Scheduled trigger
-    - cron: '*/5 * * * *'  # Runs every 5 minutes (adjust if needed)
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *' # Run every 5 minutes
 
 jobs:
   transaction_alerts:
@@ -11,19 +10,20 @@ jobs:
     steps:
       - name: Get transaction data from BscScan
         run: |
-          # Set up environment variables for the BscScan API
           export API_KEY="J7ZWATDNC5H2JPCRU6AGVX7VHXUESWWSX5"
           export TOKEN_ADDRESS="0xA4b3445A58111ABD407C34402aB59B0FE05bFF5a"
           export BOT_TOKEN="${{ secrets.TELEGRAMBOTTOKEN }}"
           export CHAT_ID="-1002455751644"
 
-          # Call the BscScan API
-          RESPONSE=$(curl -s "https://api.bscscan.com/api?module=logs&action=getLogs&fromBlock=latest&toBlock=latest&address=$TOKEN_ADDRESS&apikey=$API_KEY")
+          # Fetch transaction logs
+          RESPONSE=$(curl -s "https://api.bscscan.com/api?module=logs&action=getLogs&fromBlock=0&toBlock=latest&address=$TOKEN_ADDRESS&apikey=$API_KEY")
           
-          # Parse the response and send a Telegram message if new transactions are found
-          echo "$RESPONSE" | jq -r '.result[] | "From: \(.from), To: \(.to), Value: \(.value), Tx Hash: https://bscscan.com/tx/\(.transactionHash)"' |
-          while read transaction; do
+          # Parse the last 10 transactions
+          echo "$RESPONSE" | jq -r '.result[-10:] | .[] | "From: \(.from), To: \(.to), Value: \(.value), Tx Hash: https://bscscan.com/tx/\(.transactionHash)"' > transactions.txt
+
+          # Send each transaction to Telegram
+          while read -r transaction; do
             curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
               -d "chat_id=$CHAT_ID" \
               -d "text=$transaction"
-          done
+          done < transactions.txt
