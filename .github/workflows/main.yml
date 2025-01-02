@@ -1,4 +1,6 @@
 name: Transaction Alerts
+on:
+  workflow_dispatch:
 
 on:
   schedule:
