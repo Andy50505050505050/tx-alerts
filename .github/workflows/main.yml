@@ -13,7 +13,7 @@ jobs:
           # Set up environment variables for the BscScan API
           export API_KEY="J7ZWATDNC5H2JPCRU6AGVX7VHXUESWWSX5"
           export TOKEN_ADDRESS="0xA4b3445A58111ABD407C34402aB59B0FE05bFF5a"
-          export BOT_TOKEN="8178994733:AAEW6EWaD09vG3IWafreEWTsOEG_-yvghFY"
+          export BOT_TOKEN="${{ secrets.TELEGRAMBOTTOKEN }}"
           export CHAT_ID="-1002455751644"
 
           # Call the BscScan API
