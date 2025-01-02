@@ -8,22 +8,54 @@ jobs:
   transaction_alerts:
     runs-on: ubuntu-latest
     steps:
-      - name: Get transaction data from BscScan
+      - name: Initialize Environment
         run: |
+          # Setup environment variables
           export API_KEY="J7ZWATDNC5H2JPCRU6AGVX7VHXUESWWSX5"
           export TOKEN_ADDRESS="0xA4b3445A58111ABD407C34402aB59B0FE05bFF5a"
           export BOT_TOKEN="${{ secrets.TELEGRAMBOTTOKEN }}"
-          export CHAT_ID="-1002455751644"
-
-          # Fetch transaction logs
-          RESPONSE=$(curl -s "https://api.bscscan.com/api?module=logs&action=getLogs&fromBlock=0&toBlock=latest&address=$TOKEN_ADDRESS&apikey=$API_KEY")
+          export CHAT_ID="-1002455751644" # Replace with your group chat ID
           
-          # Parse the last 10 transactions
-          echo "$RESPONSE" | jq -r '.result[-10:] | .[] | "From: \(.from), To: \(.to), Value: \(.value), Tx Hash: https://bscscan.com/tx/\(.transactionHash)"' > transactions.txt
+          # File to track the last block processed
+          LAST_BLOCK_FILE="last_block.txt"
+          if [ ! -f "$LAST_BLOCK_FILE" ]; then
+            echo "0" > $LAST_BLOCK_FILE
+          fi
+          
+          export LAST_BLOCK=$(cat $LAST_BLOCK_FILE)
 
-          # Send each transaction to Telegram
+      - name: Fetch Current BNB Price in USD
+        run: |
+          # Fetch the current BNB price from CoinGecko API
+          PRICE_RESPONSE=$(curl -s "https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd")
+          export BNB_PRICE=$(echo "$PRICE_RESPONSE" | jq -r '.binancecoin.usd')
+
+      - name: Fetch New Transactions
+        run: |
+          # Fetch the latest block from BscScan
+          LATEST_BLOCK=$(curl -s "https://api.bscscan.com/api?module=proxy&action=eth_blockNumber&apikey=$API_KEY" | jq -r '.result | tonumber')
+
+          # Fetch logs of new transactions
+          RESPONSE=$(curl -s "https://api.bscscan.com/api?module=logs&action=getLogs&fromBlock=$LAST_BLOCK&toBlock=$LATEST_BLOCK&address=$TOKEN_ADDRESS&apikey=$API_KEY")
+
+          # Save the latest block for the next run
+          echo $LATEST_BLOCK > last_block.txt
+
+          # Parse and extract transactions
+          echo "$RESPONSE" | jq -r --arg price "$BNB_PRICE" '.result[] | 
+            "🔔 *New Transaction Detected!*\n\n" +
+            "🗓️ *Date/Time*: \((.timeStamp | tonumber | strftime("%Y-%m-%d %H:%M:%S") | select(.!=null)) // "Unknown")\n" +
+            "📤 *From*: \(.from | select(.!=null) // "Unknown")\n" +
+            "📥 *To*: \(.to | select(.!=null) // "Unknown")\n" +
+            "💰 *Value*: \((.value | tonumber / 1e18 | tostring) // "Unknown") BNB (~$ \((.value | tonumber / 1e18 * ($price | tonumber) | tostring) // "Unknown"))\n" +
+            "🔗 *Transaction Hash*: [View on BscScan](https://bscscan.com/tx/\(.transactionHash))\n"' > transactions.txt
+
+      - name: Send Telegram Updates
+        run: |
+          # Send each new transaction to Telegram
           while read -r transaction; do
             curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
               -d "chat_id=$CHAT_ID" \
+              -d "parse_mode=Markdown" \
               -d "text=$transaction"
           done < transactions.txt
