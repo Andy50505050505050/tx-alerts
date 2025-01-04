@@ -9,7 +9,7 @@ jobs:
   transaction_alerts:
     runs-on: ubuntu-latest
     steps:
-      - name: Send the last 10 transactions to Telegram
+      - name: Get transaction data from BscScan and send to Telegram
         run: |
           # Set up environment variables
           export API_KEY="J7ZWATDNC5H2JPCRU6AGVX7VHXUESWWSX5"
@@ -19,12 +19,12 @@ jobs:
 
           # Fetch the last transactions from the API
           RESPONSE=$(curl -s "https://api.bscscan.com/api?module=account&action=txlist&address=$TOKEN_ADDRESS&startblock=0&endblock=latest&sort=desc&apikey=$API_KEY")
-          
+
           # Validate the response
           if echo "$RESPONSE" | jq -e .status > /dev/null 2>&1 && [ "$(echo "$RESPONSE" | jq -r .status)" = "1" ]; then
             # Initialize the message
             MESSAGE="🚀 *Latest 10 Transactions* 🚀\n\n"
-            
+
             # Loop through the last 10 transactions
             for i in $(seq 0 9); do
               TX_HASH=$(echo "$RESPONSE" | jq -r ".result[$i].hash")
@@ -33,8 +33,8 @@ jobs:
               TX_AMOUNT=$(echo "scale=4; $TX_VALUE / 10^18" | bc)
 
               # Add transaction details to the message
-              MESSAGE="${MESSAGE}*Date & Time*: $(date -d @$TX_TIMESTAMP)\n"
-              MESSAGE="${MESSAGE}*Amount*: ${TX_AMOUNT} BNB\n"
+              MESSAGE="${MESSAGE}*Date & Time*: \`$(date -d @$TX_TIMESTAMP '+%Y-%m-%d %H:%M:%S')\`\n"
+              MESSAGE="${MESSAGE}*Amount*: \`${TX_AMOUNT} BNB\`\n"
               MESSAGE="${MESSAGE}*Transaction ID*: [${TX_HASH}](https://bscscan.com/tx/${TX_HASH})\n\n"
             done
 
