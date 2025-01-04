@@ -37,19 +37,19 @@ jobs:
 
             # Format the message
             MESSAGE=$(cat <<EOF
-          🚀 ElonXCat Transaction Alert 🚀
+🚀 ElonXCat Transaction Alert 🚀
 
-          Date & Time: $(date -d @$TX_1_TIMESTAMP)
-          Amount: $TX_1_AMOUNT BNB
-          Transaction ID: $TX_1_HASH
-         [View on BscScan](https://bscscan.com/tx/$TX_1_HASH)
+Date & Time: $(date -d @$TX_1_TIMESTAMP)
+Amount: $TX_1_AMOUNT BNB
+Transaction ID: $TX_1_HASH
+[View on BscScan](https://bscscan.com/tx/$TX_1_HASH)
 
-         Date & Time: $(date -d @$TX_2_TIMESTAMP)
-         Amount: $TX_2_AMOUNT BNB
-         Transaction ID: $TX_2_HASH
-         [View on BscScan](https://bscscan.com/tx/$TX_2_HASH)
-         EOF
-         )
+Date & Time: $(date -d @$TX_2_TIMESTAMP)
+Amount: $TX_2_AMOUNT BNB
+Transaction ID: $TX_2_HASH
+[View on BscScan](https://bscscan.com/tx/$TX_2_HASH)
+EOF
+)
 
             # Send the message to Telegram
             curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
