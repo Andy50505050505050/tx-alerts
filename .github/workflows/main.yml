@@ -10,32 +10,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Get transaction data from BscScan
-        env:
-          API_KEY: ${{ secrets.BSCSCAN_API_KEY }}
-          TOKEN_ADDRESS: '0xAd52f33f9Fc4DE396f2e8236438e9c590680b54b'
-          BOT_TOKEN: ${{ secrets.TELEGRAMBOTTOKEN }}
-          CHAT_ID: '-1002455751644'
         run: |
+          # Set up environment variables
+          export API_KEY="J7ZWATDNC5H2JPCRU6AGVX7VHXUESWWSX5"
+          export TOKEN_ADDRESS="0xAd52f33f9Fc4DE396f2e8236438e9c590680b54b"
+          export BOT_TOKEN="${{ secrets.TELEGRAMBOTTOKEN }}"
+          export CHAT_ID="-1002455751644"
+
           # Fetch the last transactions from the API
           RESPONSE=$(curl -s "https://api.bscscan.com/api?module=account&action=txlist&address=$TOKEN_ADDRESS&startblock=45459378&endblock=latest&sort=desc&apikey=$API_KEY")
-          
+
           # Check if the API response is valid
           if echo "$RESPONSE" | jq -e .status > /dev/null 2>&1 && [ "$(echo "$RESPONSE" | jq -r .status)" = "1" ]; then
             # Extract transaction data
             TX_1_HASH=$(echo "$RESPONSE" | jq -r '.result[0].hash')
             TX_1_TIMESTAMP=$(echo "$RESPONSE" | jq -r '.result[0].timeStamp')
-            TX_1_VALUE=$(echo "$RESPONSE" | jq -r '.result[0].value')
             TX_2_HASH=$(echo "$RESPONSE" | jq -r '.result[1].hash')
             TX_2_TIMESTAMP=$(echo "$RESPONSE" | jq -r '.result[1].timeStamp')
-            TX_2_VALUE=$(echo "$RESPONSE" | jq -r '.result[1].value')
-            
-            # Convert transaction value to BNB
-            TX_1_AMOUNT=$(echo "scale=4; $TX_1_VALUE / 10^18" | bc)
-            TX_2_AMOUNT=$(echo "scale=4; $TX_2_VALUE / 10^18" | bc)
-            
-            # Format the message
-            MESSAGE="🚀 ElonXCat Transaction Alert 🚀\n\n📅 Date & Time: $(date -d @$TX_1_TIMESTAMP)\n💰 Amount: $TX_1_AMOUNT BNB\n🔗 Transaction ID: $TX_1_HASH\n🔍 [View on BscScan](https://bscscan.com/tx/$TX_1_HASH)\n\n📅 Date & Time: $(date -d @$TX_2_TIMESTAMP)\n💰 Amount: $TX_2_AMOUNT BNB\n🔗 Transaction ID: $TX_2_HASH\n🔍 [View on BscScan](https://bscscan.com/tx/$TX_2_HASH)"
-            
+
+            # Format the message using proper multi-line formatting
+            MESSAGE="Transaction Alert:\n"
+            MESSAGE+="\n- Date & Time: $(date -d @$TX_1_TIMESTAMP)"
+            MESSAGE+="\n- Hash: $TX_1_HASH"
+            MESSAGE+="\n- Link: https://bscscan.com/tx/$TX_1_HASH"
+            MESSAGE+="\n\n- Date & Time: $(date -d @$TX_2_TIMESTAMP)"
+            MESSAGE+="\n- Hash: $TX_2_HASH"
+            MESSAGE+="\n- Link: https://bscscan.com/tx/$TX_2_HASH"
+
             # Send the message to Telegram
             curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
               -d "chat_id=$CHAT_ID" \
