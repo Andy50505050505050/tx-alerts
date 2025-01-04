@@ -28,14 +28,18 @@ jobs:
             TX_2_HASH=$(echo "$RESPONSE" | jq -r '.result[1].hash')
             TX_2_TIMESTAMP=$(echo "$RESPONSE" | jq -r '.result[1].timeStamp')
 
-            # Manually format the transactions with minimal details
-            MESSAGE="Transaction Alert:\n"
-            MESSAGE="$MESSAGE- Date & Time: $(date -d @$TX_1_TIMESTAMP)\n"
-            MESSAGE="$MESSAGE- Hash: $TX_1_HASH\n"
-            MESSAGE="$MESSAGE- Link: https://bscscan.com/tx/$TX_1_HASH\n\n"
-            MESSAGE="$MESSAGE- Date & Time: $(date -d @$TX_2_TIMESTAMP)\n"
-            MESSAGE="$MESSAGE- Hash: $TX_2_HASH\n"
-            MESSAGE="$MESSAGE- Link: https://bscscan.com/tx/$TX_2_HASH"
+            # Format the message correctly with actual newlines
+            MESSAGE=$(cat <<EOF
+Transaction Alert:
+- Date & Time: $(date -d @$TX_1_TIMESTAMP)
+- Hash: $TX_1_HASH
+- Link: https://bscscan.com/tx/$TX_1_HASH
+
+- Date & Time: $(date -d @$TX_2_TIMESTAMP)
+- Hash: $TX_2_HASH
+- Link: https://bscscan.com/tx/$TX_2_HASH
+EOF
+)
 
             # Send the message to Telegram
             curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
