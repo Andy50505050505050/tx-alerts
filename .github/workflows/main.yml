@@ -9,28 +9,34 @@ jobs:
   transaction_alerts:
     runs-on: ubuntu-latest
     steps:
-      - name: Get transaction data from BscScan
+      - name: Send the last 10 transactions to Telegram
         run: |
-          # Set up environment variables directly
-          API_KEY="YourAPIKey"  # Make sure to replace YourAPIKey with your actual API key
-          TOKEN_ADDRESS="0xAd52f33f9Fc4DE396f2e8236438e9c590680b54b"
-          BOT_TOKEN="${{ secrets.TELEGRAMBOTTOKEN }}"
-          CHAT_ID="-1002455751644"
+          # Set up environment variables
+          export API_KEY="J7ZWATDNC5H2JPCRU6AGVX7VHXUESWWSX5"
+          export TOKEN_ADDRESS="0xAd52f33f9Fc4DE396f2e8236438e9c590680b54b"
+          export BOT_TOKEN="${{ secrets.TELEGRAMBOTTOKEN }}"
+          export CHAT_ID="-1002455751644"
 
           # Fetch the last transactions from the API
-          RESPONSE=$(curl -s "https://api.bscscan.com/api?module=account&action=txlist&address=$TOKEN_ADDRESS&startblock=45459378&endblock=latest&sort=desc&apikey=$API_KEY")
-
-          # Check if the API response is valid
+          RESPONSE=$(curl -s "https://api.bscscan.com/api?module=account&action=txlist&address=$TOKEN_ADDRESS&startblock=0&endblock=latest&sort=desc&apikey=$API_KEY")
+          
+          # Validate the response
           if echo "$RESPONSE" | jq -e .status > /dev/null 2>&1 && [ "$(echo "$RESPONSE" | jq -r .status)" = "1" ]; then
-            # Extract transaction data for the last transaction
-            TX_HASH=$(echo "$RESPONSE" | jq -r '.result[0].hash')
-            TX_TIMESTAMP=$(echo "$RESPONSE" | jq -r '.result[0].timeStamp')
+            # Initialize the message
+            MESSAGE="🚀 *Latest 10 Transactions* 🚀\n\n"
+            
+            # Loop through the last 10 transactions
+            for i in $(seq 0 9); do
+              TX_HASH=$(echo "$RESPONSE" | jq -r ".result[$i].hash")
+              TX_TIMESTAMP=$(echo "$RESPONSE" | jq -r ".result[$i].timeStamp")
+              TX_VALUE=$(echo "$RESPONSE" | jq -r ".result[$i].value")
+              TX_AMOUNT=$(echo "scale=4; $TX_VALUE / 10^18" | bc)
 
-            # Convert Unix timestamp to human-readable format
-            DATE_TIME=$(date -d @$TX_TIMESTAMP "+%Y-%m-%d %H:%M:%S")
-
-            # Format the message
-            MESSAGE="Transaction ID: $TX_HASH\nTime: $DATE_TIME\nView on BscScan: https://bscscan.com/tx/$TX_HASH"
+              # Add transaction details to the message
+              MESSAGE="${MESSAGE}*Date & Time*: $(date -d @$TX_TIMESTAMP)\n"
+              MESSAGE="${MESSAGE}*Amount*: ${TX_AMOUNT} BNB\n"
+              MESSAGE="${MESSAGE}*Transaction ID*: [${TX_HASH}](https://bscscan.com/tx/${TX_HASH})\n\n"
+            done
 
             # Send the message to Telegram
             curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
@@ -39,3 +45,4 @@ jobs:
               -d "text=$MESSAGE"
           else
             echo "No valid transactions found or an error occurred: $RESPONSE"
+          fi
