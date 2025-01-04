@@ -1,15 +1,52 @@
-# Manually format the transactions with minimal details
-MESSAGE="Transaction Alert:\n"
-MESSAGE="$MESSAGE- Date & Time: $(date -d @$TX_1_TIMESTAMP)\n"
-MESSAGE="$MESSAGE- Hash: $TX_1_HASH\n"
-MESSAGE="$MESSAGE- Link: https://bscscan.com/tx/$TX_1_HASH\n\n"
+name: Transaction Alerts
 
-MESSAGE="$MESSAGE- Date & Time: $(date -d @$TX_2_TIMESTAMP)\n"
-MESSAGE="$MESSAGE- Hash: $TX_2_HASH\n"
-MESSAGE="$MESSAGE- Link: https://bscscan.com/tx/$TX_2_HASH"
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *' # Runs every 5 minutes
 
-# Send the message to Telegram
-curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
-  -d "chat_id=$CHAT_ID" \
-  -d "parse_mode=Markdown" \
-  -d "text=$MESSAGE"
+jobs:
+  transaction_alerts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get transaction data from BscScan
+        run: |
+          # Set up environment variables
+          export API_KEY="J7ZWATDNC5H2JPCRU6AGVX7VHXUESWWSX5"
+          export TOKEN_ADDRESS="0xAd52f33f9Fc4DE396f2e8236438e9c590680b54b"
+          export BOT_TOKEN="${{ secrets.TELEGRAMBOTTOKEN }}"
+          export CHAT_ID="-1002455751644"
+
+          # Fetch the last transactions from the API
+          RESPONSE=$(curl -s "https://api.bscscan.com/api?module=account&action=txlist&address=$TOKEN_ADDRESS&startblock=45459378&endblock=latest&sort=desc&apikey=$API_KEY")
+
+          # Check if the API response is valid
+          if echo "$RESPONSE" | jq -e .status > /dev/null 2>&1 && [ "$(echo "$RESPONSE" | jq -r .status)" = "1" ]; then
+            # Extract transaction data
+            TX_1_HASH=$(echo "$RESPONSE" | jq -r '.result[0].hash')
+            TX_1_TIMESTAMP=$(echo "$RESPONSE" | jq -r '.result[0].timeStamp')
+  
+            TX_2_HASH=$(echo "$RESPONSE" | jq -r '.result[1].hash')
+            TX_2_TIMESTAMP=$(echo "$RESPONSE" | jq -r '.result[1].timeStamp')
+  
+            # Manually format the transactions with minimal details
+            MESSAGE=$(cat <<EOF
+Transaction Alert:
+- Date & Time: $(date -d @$TX_1_TIMESTAMP)
+- Hash: $TX_1_HASH
+- Link: https://bscscan.com/tx/$TX_1_HASH
+
+- Date & Time: $(date -d @$TX_2_TIMESTAMP)
+- Hash: $TX_2_HASH
+- Link: https://bscscan.com/tx/$TX_2_HASH
+EOF
+            )
+  
+            # Send the message to Telegram
+            curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+              -d "chat_id=$CHAT_ID" \
+              -d "parse_mode=Markdown" \
+              -d "text=$MESSAGE"
+          else
+            echo "No valid transactions found or an error occurred: $RESPONSE"
+          fi
