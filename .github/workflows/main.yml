@@ -27,25 +27,26 @@ jobs:
             TX_1_TO=$(echo "$RESPONSE" | jq -r '.result[0].to')
             TX_1_VALUE=$(echo "$RESPONSE" | jq -r '.result[0].value')
             TX_1_TIMESTAMP=$(echo "$RESPONSE" | jq -r '.result[0].timeStamp')
-
+  
             TX_2_HASH=$(echo "$RESPONSE" | jq -r '.result[1].hash')
             TX_2_FROM=$(echo "$RESPONSE" | jq -r '.result[1].from')
             TX_2_TO=$(echo "$RESPONSE" | jq -r '.result[1].to')
             TX_2_VALUE=$(echo "$RESPONSE" | jq -r '.result[1].value')
             TX_2_TIMESTAMP=$(echo "$RESPONSE" | jq -r '.result[1].timeStamp')
+  
+            # Manually format the transactions with escaped characters
+            MESSAGE="🚀 *ElonXCat Live Transaction Alert* 🚀\n\n"
+            MESSAGE="$MESSAGE🗓️ *Date & Time:* $(date -d @$TX_1_TIMESTAMP)\n"
+            MESSAGE="$MESSAGE📤 *From:* $TX_1_FROM\n"
+            MESSAGE="$MESSAGE📥 *To:* $TX_1_TO\n"
+            MESSAGE="$MESSAGE💰 *Amount:* $(echo "$TX_1_VALUE / 10^18" | bc) BNB (~$ $(echo "$TX_1_VALUE / 10^18 * 300" | bc))\n"
+            MESSAGE="$MESSAGE🔗 [View on BscScan](https://bscscan.com/tx/$TX_1_HASH)\n\n"
 
-            # Manually format the transactions
-            MESSAGE="🚀 *ElonXCat Live Transaction Alert* 🚀\n\n
-            🗓️ *Date & Time:* $(date -d @$TX_1_TIMESTAMP)\n
-            📤 *From:* $TX_1_FROM\n
-            📥 *To:* $TX_1_TO\n
-            💰 *Amount:* $(echo "$TX_1_VALUE / 10^18" | bc) BNB (~$ $(echo "$TX_1_VALUE / 10^18 * 300" | bc))\n
-            🔗 [View on BscScan](https://bscscan.com/tx/$TX_1_HASH)\n\n
-            🗓️ *Date & Time:* $(date -d @$TX_2_TIMESTAMP)\n
-            📤 *From:* $TX_2_FROM\n
-            📥 *To:* $TX_2_TO\n
-            💰 *Amount:* $(echo "$TX_2_VALUE / 10^18" | bc) BNB (~$ $(echo "$TX_2_VALUE / 10^18 * 300" | bc))\n
-            🔗 [View on BscScan](https://bscscan.com/tx/$TX_2_HASH)"
+            MESSAGE="$MESSAGE🗓️ *Date & Time:* $(date -d @$TX_2_TIMESTAMP)\n"
+            MESSAGE="$MESSAGE📤 *From:* $TX_2_FROM\n"
+            MESSAGE="$MESSAGE📥 *To:* $TX_2_TO\n"
+            MESSAGE="$MESSAGE💰 *Amount:* $(echo "$TX_2_VALUE / 10^18" | bc) BNB (~$ $(echo "$TX_2_VALUE / 10^18 * 300" | bc))\n"
+            MESSAGE="$MESSAGE🔗 [View on BscScan](https://bscscan.com/tx/$TX_2_HASH)"
 
             # Send the message to Telegram
             curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
