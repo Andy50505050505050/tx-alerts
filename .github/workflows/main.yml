@@ -29,13 +29,13 @@ jobs:
             TX_2_TIMESTAMP=$(echo "$RESPONSE" | jq -r '.result[1].timeStamp')
 
             # Format the message using proper multi-line formatting
-            MESSAGE="Transaction Alert:\n"
-            MESSAGE+="\n- Date & Time: $(date -d @$TX_1_TIMESTAMP)"
-            MESSAGE+="\n- Hash: $TX_1_HASH"
-            MESSAGE+="\n- Link: https://bscscan.com/tx/$TX_1_HASH"
-            MESSAGE+="\n\n- Date & Time: $(date -d @$TX_2_TIMESTAMP)"
-            MESSAGE+="\n- Hash: $TX_2_HASH"
-            MESSAGE+="\n- Link: https://bscscan.com/tx/$TX_2_HASH"
+            MESSAGE="Transaction Alert:\\n"
+            MESSAGE+="\\n- Date & Time: $(date -d @$TX_1_TIMESTAMP)"
+            MESSAGE+="\\n- Hash: $TX_1_HASH"
+            MESSAGE+="\\n- Link: https://bscscan.com/tx/$TX_1_HASH"
+            MESSAGE+="\\n\\n- Date & Time: $(date -d @$TX_2_TIMESTAMP)"
+            MESSAGE+="\\n- Hash: $TX_2_HASH"
+            MESSAGE+="\\n- Link: https://bscscan.com/tx/$TX_2_HASH"
 
             # Send the message to Telegram
             curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
