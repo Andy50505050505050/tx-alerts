@@ -12,23 +12,12 @@ jobs:
         run: |
           # Set up environment variables
           export API_KEY="J7ZWATDNC5H2JPCRU6AGVX7VHXUESWWSX5"
-          export TOKEN_ADDRESS="0xAd52f33f9Fc4DE396f2e8236438e9c590680B54B"
+          export TOKEN_ADDRESS="0xAd52f33f9Fc4DE396f2e8236438e9c590680b54b"
           export BOT_TOKEN="${{ secrets.TELEGRAMBOTTOKEN }}"
           export CHAT_ID="-1002455751644"
 
-          # Fetch the last transactions
-          RESPONSE=$(curl -s "https://api.bscscan.com/api?module=logs&action=getLogs&fromBlock=45461628&toBlock=latest&address=$TOKEN_ADDRESS&apikey=$API_KEY")
-          
-          echo "BscScan Response: $RESPONSE" # Debugging log
-          
+          # Fetch the last transactions from the API
+          RESPONSE=$(curl -s "https://api.bscscan.com/api?module=account&action=txlist&address=$TOKEN_ADDRESS&startblock=45459378&endblock=latest&sort=desc&apikey=$API_KEY")
+
           # Check if the API response is valid
-          if echo "$RESPONSE" | jq -e .status > /dev/null 2>&1; then
-            echo "$RESPONSE" | jq -r '.result[:2] | .[] | "🚀 *ElonXCat Live Transaction Alert* 🚀\n\n🗓️ *Date & Time:* \(.timeStamp | tonumber | todate | strftime("%Y-%m-%d %H:%M:%S"))\n📤 *From:* \(.from)\n📥 *To:* \(.to)\n💰 *Amount:* \(.data | tonumber / 10^18) BNB (~$ \((.data | tonumber / 10^18) * 300))\n🔗 [View on BscScan](https://bscscan.com/tx/\(.transactionHash))\n---"' | while read transaction; do
-              curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
-                -d "chat_id=$CHAT_ID" \
-                -d "parse_mode=Markdown" \
-                -d "text=$transaction"
-            done
-          else
-            echo "Failed to fetch data from BscScan or no transactions found: $RESPONSE"
-          fi
+          if echo "$RESPONSE" | jq -e .status > /dev/null 2>&1 && [ "$(echo "$RESPO
