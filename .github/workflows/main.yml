@@ -22,7 +22,8 @@ jobs:
           # Check if the API response is valid
           if echo "$RESPONSE" | jq -e .status > /dev/null 2>&1 && [ "$(echo "$RESPONSE" | jq -r .status)" = "1" ]; then
             # Parse and format the last two transactions
-            echo "$RESPONSE" | jq -r '.result[:2] | .[] | "🚀 *ElonXCat Live Transaction Alert* 🚀\n\n🗓️ *Date & Time:* \(.timeStamp | tonumber | todate)\n📤 *From:* \(.from)\n📥 *To:* \(.to)\n💰 *Amount:* \((.value | tonumber) / 10^18) BNB (~$ \(((.value | tonumber) / 10^18) * 300))\n🔗 [View on BscScan](https://bscscan.com/tx/\(.hash))\n---"' | while read transaction; do
+            echo "$RESPONSE" | jq -r '.result[:2] | .[] | 
+              "🚀 *ElonXCat Live Transaction Alert* 🚀\n\n🗓️ *Date & Time:* \(.timeStamp | tonumber | todate)\n📤 *From:* \(.from)\n📥 *To:* \(.to)\n💰 *Amount:* \((.value | tonumber) / 10^18) BNB (~$ \(((.value | tonumber) / 10^18) * 300))\n🔗 [View on BscScan](https://bscscan.com/tx/\(.hash))\n---"' | while read transaction; do
               curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
                 -d "chat_id=$CHAT_ID" \
                 -d "parse_mode=Markdown" \
@@ -31,4 +32,3 @@ jobs:
           else
             echo "No valid transactions found or an error occurred: $RESPONSE"
           fi
-          
