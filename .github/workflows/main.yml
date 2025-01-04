@@ -25,17 +25,31 @@ jobs:
             # Extract transaction data
             TX_1_HASH=$(echo "$RESPONSE" | jq -r '.result[0].hash')
             TX_1_TIMESTAMP=$(echo "$RESPONSE" | jq -r '.result[0].timeStamp')
+            TX_1_VALUE=$(echo "$RESPONSE" | jq -r '.result[0].value')
+
             TX_2_HASH=$(echo "$RESPONSE" | jq -r '.result[1].hash')
             TX_2_TIMESTAMP=$(echo "$RESPONSE" | jq -r '.result[1].timeStamp')
+            TX_2_VALUE=$(echo "$RESPONSE" | jq -r '.result[1].value')
 
-            # Format the message using proper multi-line formatting
-            MESSAGE="Transaction Alert:\n"
-            MESSAGE+="\n- Date & Time: $(date -d @$TX_1_TIMESTAMP)"
-            MESSAGE+="\n- Hash: $TX_1_HASH"
-            MESSAGE+="\n- Link: https://bscscan.com/tx/$TX_1_HASH"
-            MESSAGE+="\n\n- Date & Time: $(date -d @$TX_2_TIMESTAMP)"
-            MESSAGE+="\n- Hash: $TX_2_HASH"
-            MESSAGE+="\n- Link: https://bscscan.com/tx/$TX_2_HASH"
+            # Convert transaction value to BNB
+            TX_1_AMOUNT=$(echo "scale=4; $TX_1_VALUE / 10^18" | bc)
+            TX_2_AMOUNT=$(echo "scale=4; $TX_2_VALUE / 10^18" | bc)
+
+            # Format the message
+            MESSAGE=$(cat <<EOF
+          🚀 ElonXCat Transaction Alert 🚀
+
+          Date & Time: $(date -d @$TX_1_TIMESTAMP)
+          Amount: $TX_1_AMOUNT BNB
+          Transaction ID: $TX_1_HASH
+         [View on BscScan](https://bscscan.com/tx/$TX_1_HASH)
+
+         Date & Time: $(date -d @$TX_2_TIMESTAMP)
+         Amount: $TX_2_AMOUNT BNB
+         Transaction ID: $TX_2_HASH
+         [View on BscScan](https://bscscan.com/tx/$TX_2_HASH)
+         EOF
+         )
 
             # Send the message to Telegram
             curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
