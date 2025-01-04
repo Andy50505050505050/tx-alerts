@@ -22,8 +22,8 @@ jobs:
 
           # Check if the API response is valid
           if echo "$RESPONSE" | jq -e .status > /dev/null 2>&1 && [ "$(echo "$RESPONSE" | jq -r .status)" = "1" ]; then
-            # Extract transaction data for the last two transactions
-            for i in 0 1
+            # Iterate through the last 5 transactions
+            for i in {0..4}
             do
               TX_HASH=$(echo "$RESPONSE" | jq -r ".result[$i].hash")
               TX_FROM=$(echo "$RESPONSE" | jq -r ".result[$i].from")
@@ -31,7 +31,7 @@ jobs:
               TX_VALUE=$(echo "$RESPONSE" | jq -r ".result[$i].value")
               TX_TIMESTAMP=$(echo "$RESPONSE" | jq -r ".result[$i].timeStamp")
 
-              # Convert value from Wei to BNB assuming the token follows standard Ethereum decimal places (18)
+              # Convert value from Wei to BNB, assuming the token follows standard Ethereum decimal places (18)
               TX_AMOUNT=$(bc <<< "scale=4; $TX_VALUE / 1000000000000000000")
               DATE_TIME=$(date -d @$TX_TIMESTAMP "+%Y-%m-%d %H:%M:%S")
 
