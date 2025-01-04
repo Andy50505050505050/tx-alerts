@@ -16,17 +16,17 @@ jobs:
           export BOT_TOKEN="${{ secrets.TELEGRAMBOTTOKEN }}"
           export CHAT_ID="-1002455751644"
 
-          # Fetch the last two transactions
-          RESPONSE=$(curl -s "https://api.bscscan.com/api?module=logs&action=getLogs&fromBlock=latest&toBlock=latest&address=$TOKEN_ADDRESS&apikey=$API_KEY")
-
-          # Validate and parse the response
-          if [ "$(echo "$RESPONSE" | jq -r '.status')" == "1" ]; then
-            echo "$RESPONSE" | jq -r '.result[:2] | .[] | "🚀 *ElonXCat Live Transaction Alert* 🚀\n\n🗓️ *Date & Time:* \(.timeStamp | tonumber | strftime("%Y-%m-%d %H:%M:%S"))\n📤 *From:* \(.from)\n📥 *To:* \(.to)\n💰 *Amount:* \(.value | tonumber / 10^18) BNB (~$ \((.value | tonumber / 10^18) * 300))\n🔗 [View on BscScan](https://bscscan.com/tx/\(.transactionHash))\n---"' | while read transaction; do
+          # Fetch the last two transactions from block 45461628
+          RESPONSE=$(curl -s "https://api.bscscan.com/api?module=logs&action=getLogs&fromBlock=45461628&toBlock=latest&address=$TOKEN_ADDRESS&apikey=$API_KEY")
+          
+          # Check if the API response is valid
+          if echo "$RESPONSE" | jq -e .status > /dev/null 2>&1; then
+            echo "$RESPONSE" | jq -r '.result[:2] | .[] | "🚀 *ElonXCat Live Transaction Alert* 🚀\n\n🗓️ *Date & Time:* \(.timeStamp | tonumber | todate)\n📤 *From:* \(.from)\n📥 *To:* \(.to)\n💰 *Amount:* \(.value | tonumber / 10^18) BNB (~$ \((.value | tonumber / 10^18) * 300))\n🔗 [View on BscScan](https://bscscan.com/tx/\(.transactionHash))\n---"' | while read transaction; do
               curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
                 -d "chat_id=$CHAT_ID" \
                 -d "parse_mode=Markdown" \
                 -d "text=$transaction"
             done
           else
-            echo "No valid transactions found or an error occurred: $RESPONSE"
+            echo "Failed to fetch data from BscScan: $RESPONSE"
           fi
